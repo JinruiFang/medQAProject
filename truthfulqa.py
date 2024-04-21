@@ -196,7 +196,7 @@ class MultipleChoicePipeline(Pipeline):
         predictions = np.array(min_loss_indices.cpu())
         structured_losses = losses_per_question.cpu().numpy()
         
-        return predictions
+        return Output(loss=structured_losses, prediction=predictions)
 
 def run_model(pipeline: MultipleChoicePipeline, dataset: Dataset,
               batch_size: int = 10) -> Output:
