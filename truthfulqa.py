@@ -278,16 +278,19 @@ if __name__ == "__main__":
     # Load TruthfulQA
     split = "validation[:10]" if args.debug else "validation"
     truthfulqa = load_dataset("bigbio/med_qa", split=split)
-    def extract_values(row):
-        return [item['value'] for item in row]
+    def update_dataset(example):
+        # Numeric conversion for answer indices
+        choice_to_numeric = {'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4}
+        if example['answer_idx'] in choice_to_numeric:
+            example['label'] = choice_to_numeric[example['answer_idx']]
+        else:
+            example['label'] = None  # Or some default value
+        
+        # Extracting choice values
+        example['choices'] = [item['value'] for item in example['options']]
+        return example
 
-    choice_to_numeric = {'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4}
-
-    import pandas as pd
-    df = pd.DataFrame({'question' : truthfulqa['question'], 'options' : truthfulqa['options'], 'answer': truthfulqa['answer_idx']})
-    df['choices'] = df['options'].apply(extract_values)
-    df['label'] = df['answer'].map(choice_to_numeric)
-    truthfulqa = df
+    updated_dataset = truthfulqa.map(update_dataset)
 
     # Load pipeline and prompts
     lm = MultipleChoicePipeline(model=args.model)
@@ -298,5 +301,5 @@ if __name__ == "__main__":
 
     # Run the pipeline on TruthfulQA
     print_delay(f"Testing model {args.model} on TruthfulQA...")
-    acc = evaluate_truthfulqa(lm, truthfulqa, batch_size=3)
+    acc = evaluate_truthfulqa(lm, updated_dataset, batch_size=3)
     print_delay(f"Done. Accuracy: {acc['accuracy']}")
