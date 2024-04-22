@@ -151,7 +151,7 @@ class MultipleChoicePipeline(Pipeline):
 
     def preprocess(self, batch: Dict[str, Any]) -> Dict[str, torch.Tensor]:
         input_texts = self._get_input_texts(batch)
-        tokens = self.tokenizer(input_texts, padding=True, truncation=True, return_tensors="pt")
+        tokens = self.tokenizer(input_texts, padding=True, truncation=True, max_length=512, return_tensors="pt")
         if self.device is not None:
             tokens = {key: value.to(self.device) for key, value in tokens.items()}
         return tokens
